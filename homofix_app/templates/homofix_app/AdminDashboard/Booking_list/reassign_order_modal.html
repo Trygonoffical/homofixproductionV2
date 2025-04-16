@@ -1,0 +1,38 @@
+<div class="modal fade" id="reassign-{{i.booking.id}}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-md modal-dialog-centered">
+        <form action="{% url "reassign" %}" method="POST">
+            {% csrf_token %}
+            <div class="modal-content bg-dark">
+                <div class="modal-header">
+                    <h5 class="modal-title text-white">Reassign</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-white">
+                    <input type="text" value="{{i.id}}" name="task_id" hidden>
+                    <p>List of Technician</p>
+                    
+                    
+
+                    <select name="reassign_technician" id="" class="form-control bg-dark">
+                        {% for technician in tech %}
+                        {% if technician.city|lower == i.booking.city|lower and i.booking.booking_product.first.product.subcategory in technician.subcategories.all %}
+                                <option value="{{technician.id}}">{{technician.admin.first_name}} {{technician.admin.last_name}}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                    
+                    
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light"
+                        data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                    {% comment %} <a class="btn btn-primary" href="{% url 'delete_of_task' i.id %}">Submit</a> {% endcomment %}
+                    
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
