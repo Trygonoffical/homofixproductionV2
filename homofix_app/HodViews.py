@@ -1429,103 +1429,96 @@ def delete_faq(request,id):
     return redirect('add_faq')
 
 
-def booking_list(request):
-    booking_count = Booking.objects.filter(status="New").count()
-    booking = Booking.objects.all().order_by("-id")
-    bookings = Booking.objects.filter(status="New").order_by("-id")
+# def booking_list(request):
+    
+#     booking_count = Booking.objects.filter(status="New").count()
+#     booking = Booking.objects.all().order_by("-id")
+#     bookings = Booking.objects.filter(status="New").order_by("-id")
    
 
-    technicians = Technician.objects.all()
-    tasks = Task.objects.all()
+#     technicians = Technician.objects.all()
+#     tasks = Task.objects.all()
+#     new_expert_count = Technician.objects.filter(status="New").count()
+#     rebooking_count = Rebooking.objects.all().count()
+#     customer_count = Customer.objects.all().count()
+#     if request.method == "POST":
+#         otp_number = random.randint(0, 9999)
+#         print("otpp number", otp_number)
+#         otp_unique = str(otp_number).zfill(3)
+
+#         first_name = request.POST.get("full_name")
+#         mob = request.POST.get("mob")
+#         request.session["full_name"] = first_name
+#         request.session["mob"] = mob
+#         request.session["otp"] = otp_unique
+#         if Customer.objects.filter(mobile=mob).exists():
+           
+#             return JsonResponse({'status':'Save'})
+#         else:
+            
+#             return JsonResponse({"status": "Save"})
+
+        
+#     context = {
+#         "booking": booking,
+#         "technicians": technicians,
+#         "tasks": tasks,
+#         "new_expert_count": new_expert_count,
+#         "booking_count": booking_count,
+#         "rebooking_count": rebooking_count,
+#         "customer_count": customer_count,
+#         "bookings": bookings,
+#     }
+
+#     return render(
+#         request, "homofix_app/AdminDashboard/Booking_list/booking.html", context
+#     )
+
+
+
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+
+def booking_list(request):
+    booking_count = Booking.objects.filter(status="New").count()
+    booking_list = Booking.objects.filter(status="New").order_by("-id")
+    
+    paginator = Paginator(booking_list, 5)  # Show 10 bookings per page
+    page = request.GET.get("page")
+    try:
+        bookings = paginator.page(page)
+    except PageNotAnInteger:
+        bookings = paginator.page(1)
+    except EmptyPage:
+        bookings = paginator.page(paginator.num_pages)
+
     new_expert_count = Technician.objects.filter(status="New").count()
-    rebooking_count = Rebooking.objects.all().count()
-    customer_count = Customer.objects.all().count()
+    rebooking_count = Rebooking.objects.count()
+    customer_count = Customer.objects.count()
+
     if request.method == "POST":
         otp_number = random.randint(0, 9999)
-        print("otpp number", otp_number)
-        otp_unique = str(otp_number).zfill(3)
+        otp_unique = str(otp_number).zfill(4)
 
         first_name = request.POST.get("full_name")
         mob = request.POST.get("mob")
+
         request.session["full_name"] = first_name
         request.session["mob"] = mob
         request.session["otp"] = otp_unique
-        if Customer.objects.filter(mobile=mob).exists():
-            # username = "TRYGON"
-            # apikey = "E705A-DFEDC"
-            # apirequest = "Text"
-            # sender = "TRYGON"
-            # mobile = mob
-            # message = f"Dear User {otp_unique} is the OTP for your login at Trygon. In case you have not requested this, please contact us at info@trygon.in"
-            # template_id = "1707162192151162124"
-            # url = f"https://sms.webtextsolution.com/sms-panel/api/http/index.php?username=TRYGON&apikey=E705A-DFEDC&apirequest=Text&sender={sender}&mobile={mobile}&message={urllib.parse.quote(message)}&route=TRANS&TemplateID=1707162192151162124&format=JSON"
 
-            # response = requests.get(url)
-            return JsonResponse({'status':'Save'})
-        else:
-            # username = "TRYGON"
-            # apikey = "E705A-DFEDC"
-            # apirequest = "Text"
-            # sender = "TRYGON"
-            # mobile = mob
-            # message = f"Dear User {otp_unique} is the OTP for your login at Trygon. In case you have not requested this, please contact us at info@trygon.in"
-            # template_id = "1707162192151162124"
-
-            # url = f"https://sms.webtextsolution.com/sms-panel/api/http/index.php?username=TRYGON&apikey=E705A-DFEDC&apirequest=Text&sender={sender}&mobile={mobile}&message={urllib.parse.quote(message)}&route=TRANS&TemplateID=1707162192151162124&format=JSON"
-
-            # response = requests.get(url)
-            # print(response)
-            return JsonResponse({"status": "Save"})
-
-        # auth_key = "IQkJfqxEfD5l3qCu"
-        # sender_id = "TRYGON"
-        # route = 2
-        # number = mob
-
-        # message = f"Dear {first_name} {otp_unique} is the OTP for your login at Trygon. In case you have not requested this, please contact us at info@trygon.in"
-
-        # template_id = "1707162192151162124"
-        # url = f"http://weberleads.in/http-tokenkeyapi.php?authentic-key={auth_key}&senderid={sender_id}&route={route}&number={number}&message={urllib.parse.quote(message)}&templateid={template_id}"
-        # response = requests.get(url)
-
-        # return JsonResponse({"status": "Save"})
-
-        # else:
-        #     print("no hellooo")
-        # request.session['full_name'] = first_name
-        # request.session['mob'] = mob
-        # request.session['otp'] = otp_unique
-
-        # auth_key = "IQkJfqxEfD5l3qCu"
-        # sender_id = "TRYGON"
-        # route = 2
-        # number = mob
-
-        # message = f"Dear {first_name} {otp_unique} is the OTP for your login at Trygon. In case you have not requested this, please contact us at info@trygon.in"
-
-        # template_id = "1707162192151162124"
-        # url = f"http://weberleads.in/http-tokenkeyapi.php?authentic-key={auth_key}&senderid={sender_id}&route={route}&number={number}&message={urllib.parse.quote(message)}&templateid={template_id}"
-        # response = requests.get(url)
-
-        # return JsonResponse({"status": "Save"})
-
-    # return render(request, 'Support_templates/Orders/order.html',context)
+        return JsonResponse({'status': 'Save'})
 
     context = {
-        "booking": booking,
-        "technicians": technicians,
-        "tasks": tasks,
+        "bookings": bookings,
         "new_expert_count": new_expert_count,
         "booking_count": booking_count,
         "rebooking_count": rebooking_count,
         "customer_count": customer_count,
-        "bookings": bookings,
     }
 
     return render(
         request, "homofix_app/AdminDashboard/Booking_list/booking.html", context
     )
-
 
 def admin_verify_otp(request):
     if request.method == "POST":
@@ -2054,25 +2047,48 @@ def delete_of_task(request, id):
 #     return render(request,'homofix_app/AdminDashboard/Booking_list/cancel_booking.html',context)    
 
 
-def Listofcancel(request):
-    booking = Booking.objects.filter(status="Cancelled").order_by("-id")
-    new_expert_count = Technician.objects.filter(status="New").count()
-    booking_count = Booking.objects.filter(status = "New").count()
-    rebooking_count = Rebooking.objects.all().count()
-    customer_count = Customer.objects.all().count()
+# def Listofcancel(request):
+#     booking = Booking.objects.filter(status="Cancelled").order_by("-id")
+#     new_expert_count = Technician.objects.filter(status="New").count()
+#     booking_count = Booking.objects.filter(status = "New").count()
+#     rebooking_count = Rebooking.objects.count()
+
+#     customer_count = Customer.objects.count()
     
-    # Fetch tasks related to the bookings
-    
-    # tasks = Task.objects.filter(booking__in=booking)
+   
     
 
+#     context = {
+#         'booking': booking,
+#         'new_expert_count': new_expert_count,
+#         'booking_count': booking_count,
+#         'rebooking_count': rebooking_count,
+#         'customer_count': customer_count,
+#     }
+#     return render(request, 'homofix_app/AdminDashboard/Booking_list/cancel_booking.html', context)
+
+
+
+
+def Listofcancel(request):
+    booking_list = Booking.objects.filter(status="Cancelled").order_by("-id")
+
+    # Set up pagination
+    paginator = Paginator(booking_list, 10)  # Show 10 bookings per page
+    page_number = request.GET.get('page')
+    booking = paginator.get_page(page_number)
+
+    new_expert_count = Technician.objects.filter(status="New").count()
+    booking_count = Booking.objects.filter(status="New").count()
+    rebooking_count = Rebooking.objects.count()
+    customer_count = Customer.objects.count()
+
     context = {
-        'booking': booking,
+        'booking': booking,  # this now contains only the paginated page object
         'new_expert_count': new_expert_count,
         'booking_count': booking_count,
         'rebooking_count': rebooking_count,
         'customer_count': customer_count,
-        # 'tasks': tasks,  # Pass tasks to the template
     }
     return render(request, 'homofix_app/AdminDashboard/Booking_list/cancel_booking.html', context)
 
@@ -2080,21 +2096,17 @@ def Listofcancel(request):
 
 
 
-
-
 def Listofcancel_expert(request):
-    # booking = Task.objects.filter(booking__status="Cancelled").order_by("-id")
-    # new_expert_count = Technician.objects.filter(status="New").count()
-    # booking_count = Booking.objects.filter(status = "New").count()
-    # rebooking_count = Rebooking.objects.all().count()
-    # customer_count = Customer.objects.all().count()
-    # print("bookinggg...........",booking)
     
-    booking = Task.objects.filter(booking__status="Cancelled").order_by("-id")
+    
+    task_list  = Task.objects.filter(booking__status="Cancelled").order_by("-id")
+    paginator = Paginator(task_list, 10)
+    page_number = request.GET.get('page')
+    booking = paginator.get_page(page_number)
     new_expert_count = Technician.objects.filter(status="New").count()
     booking_count = Booking.objects.filter(status = "New").count()
-    rebooking_count = Rebooking.objects.all().count()
-    customer_count = Customer.objects.all().count()
+    rebooking_count = Rebooking.objects.count()
+    customer_count = Customer.objects.count()
     
     # Fetch tasks related to the bookings
     
@@ -2116,6 +2128,8 @@ def Listofcancel_expert(request):
         'customer_count':customer_count
     }
     return render(request,'homofix_app/AdminDashboard/Booking_list/cancel_booking_expert.html',context)    
+
+
 
 def cancel_by_expert(request,id):
     booking = Task.objects.filter(booking__status="Cancelled", technician=id).order_by("-id")
@@ -2185,9 +2199,13 @@ def ListofNewExpert(request):
 
 
 def Listofrebooking(request):
-    rebooking = Rebooking.objects.all().order_by("-id")
-    rebooking_count = Rebooking.objects.all().count()
-    customer_count = Customer.objects.all().count()
+    rebooking_list  = Rebooking.objects.all().order_by("-id")
+     # Apply pagination (e.g. 10 records per page)
+    paginator = Paginator(rebooking_list, 10)
+    page_number = request.GET.get('page')
+    rebooking = paginator.get_page(page_number)
+    rebooking_count = Rebooking.objects.count()
+    customer_count = Customer.objects.count()
     new_expert_count = Technician.objects.filter(status="New").count()
     booking_count = Booking.objects.filter(status = "New").count()
     
@@ -2491,21 +2509,30 @@ def admin_share_percentage_delete(request,id):
     share_percentage.delete()
     messages.success(request, "Share Percentage deleted successfully.")
     return redirect('admin_share_percentage')
-def admin_customer_list(request):
-    customer = Customer.objects.all()
-    new_expert_count = Technician.objects.filter(status="New").count()
-    booking_count = Booking.objects.filter(status = "New").count()
-    rebooking_count = Rebooking.objects.all().count()
-    customer_count = Customer.objects.all().count()
-    context = {
-        'customer':customer,
-        'new_expert_count':new_expert_count,
-        'booking_count':booking_count,
-        'rebooking_count':rebooking_count,
-        'customer_count':customer_count,
-    }
-    return render(request,'homofix_app/AdminDashboard/Customer/customer_list.html',context)    
 
+
+
+def admin_customer_list(request):
+    customer_list = Customer.objects.all().order_by('-id')  # Add ordering to fix the warning
+    paginator = Paginator(customer_list, 10)  # Show 10 customers per page
+    page_number = request.GET.get('page')
+    customer = paginator.get_page(page_number)
+
+    new_expert_count = Technician.objects.filter(status="New").count()
+    booking_count = Booking.objects.filter(status="New").count()
+    rebooking_count = Rebooking.objects.count()
+    customer_count = Customer.objects.count()
+
+    context = {
+        'customer': customer,
+        'new_expert_count': new_expert_count,
+        'booking_count': booking_count,
+        'rebooking_count': rebooking_count,
+        'customer_count': customer_count,
+    }
+    return render(request, 'homofix_app/AdminDashboard/Customer/customer_list.html', context)
+
+    
 def admin_customer_edit(request,id):
     state_choices = STATE_CHOICES
     customer = Customer.objects.get(id=id)
