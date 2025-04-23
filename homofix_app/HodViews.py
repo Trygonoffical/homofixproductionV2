@@ -1478,11 +1478,64 @@ def delete_faq(request,id):
 
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
-def booking_list(request):
-    booking_count = Booking.objects.filter(status="New").count()
-    booking_list = Booking.objects.filter(status="New").order_by("-id")
+# def booking_list(request):
+#     booking_count = Booking.objects.filter(status="New").count()
+#     booking_list = Booking.objects.filter(status="New").order_by("-id")
     
-    paginator = Paginator(booking_list, 5)  # Show 10 bookings per page
+#     paginator = Paginator(booking_list, 5)  # Show 10 bookings per page
+#     page = request.GET.get("page")
+#     try:
+#         bookings = paginator.page(page)
+#     except PageNotAnInteger:
+#         bookings = paginator.page(1)
+#     except EmptyPage:
+#         bookings = paginator.page(paginator.num_pages)
+
+#     new_expert_count = Technician.objects.filter(status="New").count()
+#     rebooking_count = Rebooking.objects.count()
+#     customer_count = Customer.objects.count()
+
+#     if request.method == "POST":
+#         otp_number = random.randint(0, 9999)
+#         otp_unique = str(otp_number).zfill(4)
+
+#         first_name = request.POST.get("full_name")
+#         mob = request.POST.get("mob")
+
+#         request.session["full_name"] = first_name
+#         request.session["mob"] = mob
+#         request.session["otp"] = otp_unique
+
+#         return JsonResponse({'status': 'Save'})
+
+#     context = {
+#         "bookings": bookings,
+#         "new_expert_count": new_expert_count,
+#         "booking_count": booking_count,
+#         "rebooking_count": rebooking_count,
+#         "customer_count": customer_count,
+#     }
+
+#     return render(
+#         request, "homofix_app/AdminDashboard/Booking_list/booking.html", context
+#     )
+
+
+from django.db.models import Q  # Q object for complex queries
+
+def booking_list(request):
+    search_query = request.GET.get('q', '')  # Search query from input field
+
+    bookings_queryset = Booking.objects.filter(status="New").order_by("-id")
+
+    if search_query:
+        bookings_queryset = bookings_queryset.filter(
+            Q(order_id__icontains=search_query) |
+            Q(booking_customer__icontains=search_query) |
+            Q(mobile__icontains=search_query)
+        )
+
+    paginator = Paginator(bookings_queryset, 5)
     page = request.GET.get("page")
     try:
         bookings = paginator.page(page)
@@ -1495,30 +1548,16 @@ def booking_list(request):
     rebooking_count = Rebooking.objects.count()
     customer_count = Customer.objects.count()
 
-    if request.method == "POST":
-        otp_number = random.randint(0, 9999)
-        otp_unique = str(otp_number).zfill(4)
-
-        first_name = request.POST.get("full_name")
-        mob = request.POST.get("mob")
-
-        request.session["full_name"] = first_name
-        request.session["mob"] = mob
-        request.session["otp"] = otp_unique
-
-        return JsonResponse({'status': 'Save'})
-
     context = {
         "bookings": bookings,
         "new_expert_count": new_expert_count,
-        "booking_count": booking_count,
+        "booking_count": bookings_queryset.count(),
         "rebooking_count": rebooking_count,
         "customer_count": customer_count,
+        "search_query": search_query,
     }
 
-    return render(
-        request, "homofix_app/AdminDashboard/Booking_list/booking.html", context
-    )
+    return render(request, "homofix_app/AdminDashboard/Booking_list/booking.html", context)
 
 def admin_verify_otp(request):
     if request.method == "POST":
@@ -2067,14 +2106,21 @@ def delete_of_task(request, id):
 #     }
 #     return render(request, 'homofix_app/AdminDashboard/Booking_list/cancel_booking.html', context)
 
-
-
-
 def Listofcancel(request):
+    search_query = request.GET.get('q', '')
+
+    # Base queryset with Cancelled status
     booking_list = Booking.objects.filter(status="Cancelled").order_by("-id")
 
-    # Set up pagination
-    paginator = Paginator(booking_list, 10)  # Show 10 bookings per page
+    if search_query:
+        booking_list = booking_list.filter(
+            Q(order_id__icontains=search_query) |
+            Q(booking_customer__icontains=search_query) |
+            Q(mobile__icontains=search_query)
+        )
+
+    # Pagination
+    paginator = Paginator(booking_list, 10)
     page_number = request.GET.get('page')
     booking = paginator.get_page(page_number)
 
@@ -2084,7 +2130,8 @@ def Listofcancel(request):
     customer_count = Customer.objects.count()
 
     context = {
-        'booking': booking,  # this now contains only the paginated page object
+        'booking': booking,
+        'search_query': search_query,
         'new_expert_count': new_expert_count,
         'booking_count': booking_count,
         'rebooking_count': rebooking_count,
@@ -2095,21 +2142,29 @@ def Listofcancel(request):
 
 
 
-
 def Listofcancel_expert(request):
-    
-    
-    task_list  = Task.objects.filter(booking__status="Cancelled").order_by("-id")
+    query = request.GET.get('q', '')
+
+    # Filter only Cancelled bookings
+    task_list = Task.objects.filter(booking__status="Cancelled").order_by("-id")
+
+    if query:
+        task_list = task_list.filter(
+            Q(booking__order_id__icontains=query) |
+            Q(technician__expert_id__icontains=query) |
+            Q(booking__customer__admin__first_name__icontains=query) |
+            Q(booking__customer__admin__last_name__icontains=query) |
+            Q(booking__customer__mobile__icontains=query)
+        )
+
     paginator = Paginator(task_list, 10)
     page_number = request.GET.get('page')
     booking = paginator.get_page(page_number)
+
     new_expert_count = Technician.objects.filter(status="New").count()
-    booking_count = Booking.objects.filter(status = "New").count()
+    booking_count = Booking.objects.filter(status="New").count()
     rebooking_count = Rebooking.objects.count()
     customer_count = Customer.objects.count()
-    
-    # Fetch tasks related to the bookings
-    
 
     context = {
         'booking': booking,
@@ -2117,18 +2172,10 @@ def Listofcancel_expert(request):
         'booking_count': booking_count,
         'rebooking_count': rebooking_count,
         'customer_count': customer_count,
-          # Pass tasks to the template
+        'search_query': query
     }
-    
-    context = {
-        'booking':booking,
-        'new_expert_count':new_expert_count,
-        'booking_count':booking_count,
-        'rebooking_count':rebooking_count,
-        'customer_count':customer_count
-    }
-    return render(request,'homofix_app/AdminDashboard/Booking_list/cancel_booking_expert.html',context)    
 
+    return render(request, 'homofix_app/AdminDashboard/Booking_list/cancel_booking_expert.html', context)
 
 
 def cancel_by_expert(request,id):
@@ -2198,28 +2245,44 @@ def ListofNewExpert(request):
 
 
 
+
 def Listofrebooking(request):
-    rebooking_list  = Rebooking.objects.all().order_by("-id")
-     # Apply pagination (e.g. 10 records per page)
+    search_query = request.GET.get('q', '')
+
+    # If there's a search query, filter the rebookings
+    if search_query:
+        rebooking_list = Rebooking.objects.filter(
+            Q(booking_product__booking__order_id__icontains=search_query) |  # Search by Booking ID
+            Q(booking_product__booking__customer__admin__first_name__icontains=search_query) |  # Search by Customer First Name
+            Q(booking_product__booking__customer__admin__last_name__icontains=search_query) |  # Search by Customer Last Name
+            Q(booking_product__booking__customer__mobile__icontains=search_query) |  # Search by Customer Mobile
+            Q(technician__admin__username__icontains=search_query) # Search by Customer Mobile
+              
+        ).order_by("-id")
+    else:
+        rebooking_list = Rebooking.objects.all().order_by("-id")
+
+    # Apply pagination (e.g. 10 records per page)
     paginator = Paginator(rebooking_list, 10)
     page_number = request.GET.get('page')
     rebooking = paginator.get_page(page_number)
+
+    # Get counts for various entities
     rebooking_count = Rebooking.objects.count()
     customer_count = Customer.objects.count()
     new_expert_count = Technician.objects.filter(status="New").count()
-    booking_count = Booking.objects.filter(status = "New").count()
-    
-    
+    booking_count = Booking.objects.filter(status="New").count()
+
     context = {
-        'rebooking':rebooking,
-        'rebooking_count':rebooking_count,
-        'customer_count':customer_count,
-        'new_expert_count':new_expert_count,
-        'booking_count':booking_count
-        
+        'rebooking': rebooking,
+        'rebooking_count': rebooking_count,
+        'customer_count': customer_count,
+        'new_expert_count': new_expert_count,
+        'booking_count': booking_count,
+        'search_query': search_query  # Pass the search query back to the template
     }
 
-    return render(request,'homofix_app/AdminDashboard/Rebooking/list_of_rebooking.html',context)
+    return render(request, 'homofix_app/AdminDashboard/Rebooking/list_of_rebooking.html', context)
 
 
 
@@ -2511,13 +2574,25 @@ def admin_share_percentage_delete(request,id):
     return redirect('admin_share_percentage')
 
 
-
 def admin_customer_list(request):
-    customer_list = Customer.objects.all().order_by('-id')  # Add ordering to fix the warning
-    paginator = Paginator(customer_list, 10)  # Show 10 customers per page
+    search_query = request.GET.get('q', '')
+
+    # If there's a search query, filter the customers
+    if search_query:
+        customer_list = Customer.objects.filter(
+            Q(admin__first_name__icontains=search_query) |  # Search by First Name
+            Q(admin__last_name__icontains=search_query) |  # Search by Last Name
+            Q(mobile__icontains=search_query)  # Search by Mobile Number
+        ).order_by('-id')
+    else:
+        customer_list = Customer.objects.all().order_by('-id')
+
+    # Apply pagination (e.g. 10 records per page)
+    paginator = Paginator(customer_list, 10)
     page_number = request.GET.get('page')
     customer = paginator.get_page(page_number)
 
+    # Get counts for various entities
     new_expert_count = Technician.objects.filter(status="New").count()
     booking_count = Booking.objects.filter(status="New").count()
     rebooking_count = Rebooking.objects.count()
@@ -2529,9 +2604,10 @@ def admin_customer_list(request):
         'booking_count': booking_count,
         'rebooking_count': rebooking_count,
         'customer_count': customer_count,
+        'search_query': search_query  # Pass the search query back to the template
     }
-    return render(request, 'homofix_app/AdminDashboard/Customer/customer_list.html', context)
 
+    return render(request, 'homofix_app/AdminDashboard/Customer/customer_list.html', context)
     
 def admin_customer_edit(request,id):
     state_choices = STATE_CHOICES

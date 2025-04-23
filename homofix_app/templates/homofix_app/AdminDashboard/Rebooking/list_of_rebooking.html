@@ -26,6 +26,11 @@
     <h6 class="mb-0 text-uppercase">List of Order Completed</h6>
     <hr>
 
+    <form method="get" class="d-flex mt-2 mt-lg-0" style="gap: 10px;">
+        <input type="text" name="q" value="{{ search_query }}" placeholder="Search by Order ID, Name or Mobile" class="form-control" />
+        <button type="submit" class="btn btn-primary">Search</button>
+    </form>
+
     {% include 'homofix_app/Base/messages.html' %}
     
     <div class="card">
