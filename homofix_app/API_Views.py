@@ -1083,16 +1083,29 @@ class AddonsViewSet(ModelViewSet):
     serializer_class  = AddonsSerializer
      
 
+# class AddonsGetViewSet(ModelViewSet):
+#     queryset = Addon.objects.all()     
+#     serializer_class  = AddonsGetSerializer
+#     http_method_names = ['get', 'post', 'put', 'patch', 'delete'] 
+#     def destroy(self, request, *args, **kwargs):
+#         instance = self.get_object()
+#         self.perform_destroy(instance)
+#         return Response(status=status.HTTP_204_NO_CONTENT)
+     
 class AddonsGetViewSet(ModelViewSet):
-    queryset = Addon.objects.all()     
-    serializer_class  = AddonsGetSerializer
-    http_method_names = ['get', 'post', 'put', 'patch', 'delete'] 
+    serializer_class = AddonsGetSerializer
+    http_method_names = ['get', 'post', 'put', 'patch', 'delete']
+
+    def get_queryset(self):
+        booking_id = self.request.query_params.get('booking_id')
+        if booking_id:
+            return Addon.objects.filter(booking_prod_id__booking__id=booking_id)
+        return Addon.objects.none()  # 👈 empty if booking_id is not provided
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
-     
-
 
 
 # ----------------- Technician Location -------------------- 
