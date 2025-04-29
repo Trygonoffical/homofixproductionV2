@@ -664,6 +664,301 @@ class TaskViewSet(ModelViewSet):
                 {"success": False, "message": "Booking id and status are required."}
             )
 
+from rest_framework import status as drf_status
+class TechniciantaskViewSet(ModelViewSet):
+    authentication_classes = [BasicAuthentication]
+    serializer_class = TaskSerializer
+    queryset = Task.objects.all()
+
+
+    def list(self, request, *args, **kwargs):
+        technician_id = request.query_params.get("technician_id")
+        status = request.query_params.get("status")
+
+        if not technician_id or not status:
+            return Response({"detail": "Both 'technician_id' and 'status' are required."}, status=400)
+
+        status = status.lower()
+
+        # Mapping frontend status values to Booking.status choices
+        status_map = {
+            "assign": ["Assign", "Reached", "Proceed"],
+            "reached": ["Reached","Assign", "Proceed"],
+            "proceed": ["Proceed","Reached","Assign"],
+            "completed": ["Completed"],
+            "cancelled": ["Cancelled"],
+        }
+
+        # Check if status is valid
+        if status not in status_map:
+            return Response({"detail": f"Invalid status '{status}'. Valid options are: assign, completed, cancelled."}, status=400)
+
+        tasks = self.queryset.filter(technician=technician_id, booking__status__in=status_map[status])
+        serializer = self.get_serializer(tasks, many=True)
+        return Response(serializer.data)
+
+    # def list(self, request, *args, **kwargs):
+    #     technician_id = request.query_params.get("technician_id")
+    #     status_param = request.query_params.get("status")
+
+    #     if technician_id and status_param:
+    #         tasks = self.queryset.filter(technician=technician_id, booking__status=status_param)
+    #         serializer = self.get_serializer(tasks, many=True)
+    #         return Response(serializer.data)
+    #     else:
+    #         return Response(
+    #             {"detail": "Both 'technician_id' and 'status' are required query parameters."},
+    #             status=status.HTTP_400_BAD_REQUEST
+    #         )
+
+    # @action(detail=False, methods=['PATCH'])
+    def put(self, request):
+        booking_id = request.data.get("booking_id")
+        print("bookinggggg idddd",booking_id)
+        
+        status = request.data.get("status")
+        if booking_id and status:
+            print(booking_id)
+            try:
+                booking = Booking.objects.get(id=booking_id)
+                if booking.status == "Completed":
+                    return Response({"success": False, "message": "Booking already processed."})
+                task = Task.objects.get(booking=booking)
+                booking.status = status
+                booking.save()
+               
+               
+                # return Response({'success': True})
+                if booking.status == "Completed" and booking.online == True:
+                   
+                    # tax_rate = 0.18
+                    booking_amount = booking.total_amount
+
+                    tax_amt = booking.tax_amount
+
+                    hod_share_percentage = HodSharePercentage.objects.latest("id")
+                    hod_share_percentage_value = hod_share_percentage.percentage
+
+                    hod_share = booking_amount * (hod_share_percentage_value / 100)
+
+                    print("new hod share0", hod_share)
+                    technician_share = booking_amount - hod_share
+                    print("technicia sare", technician_share)
+
+                    # hod_share_with_tax = hod_share + tax_amt
+                    hod_share_with_tax = float(str(hod_share)) + tax_amt
+                    print("hod_share_with_tax", hod_share_with_tax)
+
+                    wallet_tecnician = technician_share
+                    # wallet_tecnician = Decimal(technician_share) - Decimal(tax_amt)
+                    print("wallet technician", wallet_tecnician)
+
+                    # technician_share = booking_amount - hod_share
+
+                    share = Share.objects.create(
+                        task=task,
+                        hod_share_percentage=hod_share_percentage,
+                        technician_share=wallet_tecnician,
+                        company_share=hod_share_with_tax,
+                    )
+                    share.save()
+                    technician = task.technician
+                    wallet, created = Wallet.objects.get_or_create(
+                        technician_id=technician
+                    )
+                    wallet.total_share += Decimal(str(wallet_tecnician))
+
+                    wallet.save()
+
+                    # --------------------- Settlement --------------------------------
+
+                    settlement = Settlement.objects.create(
+                        technician_id=technician,
+                        amount=wallet_tecnician,
+                        settlement="Settlement Add",
+                    )
+                    settlement.save()
+
+                    # ----------------------------------- Invoice Part -----------------------
+
+                    try:
+                        booking = Booking.objects.get(id=booking_id)
+                        booking.status = status
+                        booking.save()
+                        print("helooooo status", booking.status,"booking id",booking.id)
+               
+                        # tax = booking.tax_amount
+                        subtotal = booking.subtotal
+                        tax = Decimal(subtotal) * Decimal(0.18)
+                        total = tax + subtotal
+                        total_amt = Decimal(booking.total_amount) + Decimal(
+                            booking.tax_amount
+                        )
+                        cgst_sgst = Decimal(total_amt) * Decimal(0.09)
+                        grandtotal = total_amt + (cgst_sgst * 2)
+
+                        bkng_id = Booking.objects.filter(id=booking_id)
+                        if booking:
+                            invoice = Invoice.objects.filter(booking_id=booking).first()
+                            if not invoice:
+                                invoice = Invoice.objects.create(booking_id=booking)
+                                bookingprod = BookingProduct.objects.filter(
+                                    booking=booking
+                                ).first()
+
+                                # addon = Addon.objects.filter(booking_prod_id=bookingprod)
+
+                                addon = Addon.objects.filter(
+                                    booking_prod_id=bookingprod
+                                )
+
+                                input_file = render_to_string(
+                                    "Invoice/invoice.html",
+                                    {
+                                        "booking": invoice,
+                                        "addon": addon,
+                                        "total": total,
+                                        "cgst_sgst": cgst_sgst,
+                                        "grandtotal": grandtotal,
+                                    },
+                                )
+                                options = {"enable-local-file-access": ""}
+
+                                pdf_data = pdfkit.from_string(
+                                    input_file, False, options=options
+                                )
+
+                                if pdf_data:
+                                    invoice.invoice = pdf_data
+                                    invoice.save()
+                                    # invoice.save()
+                                    print("PDF data saved in invoice successfully.")
+
+                                # return Response({'success': True})
+                            else:
+                                pass
+                                # Booking does not exist
+                                # return Response({'Error': False, 'error': 'Invoice already created'})
+                    except Exception as e:
+                        print(e)
+
+                if booking.status == "Completed" and booking.cash_on_service == True:
+                    
+                    booking.satatus = "Completed"
+                    booking.save()
+                    tax_rate = 0.18
+                    booking_amount = booking.total_amount
+                    print("final amount", booking_amount)
+
+                    tax_amt = booking.tax_amount
+
+                    hod_share_percentage = HodSharePercentage.objects.latest("id")
+                    hod_share_percentage_value = hod_share_percentage.percentage
+                    hod_share = booking_amount * (hod_share_percentage_value / 100)
+
+                    acbb = Decimal(hod_share) * Decimal(0.18)
+                    print(round(acbb, 2))
+                    print("eeeeee", hod_share)
+                    wallet_tecnician = Decimal(hod_share) + Decimal(tax_amt)
+                    print("helloooo", wallet_tecnician)
+
+                    technician_share = booking_amount - hod_share
+
+                    print("technicia sare", technician_share)
+
+                    print("eeeeeeeeeeeee", wallet_tecnician)
+                    final_amt = booking.final_amount - wallet_tecnician
+
+                    hod_share_with_tax = final_amt
+
+                    share = Share.objects.create(
+                        task=task,
+                        hod_share_percentage=hod_share_percentage,
+                        technician_share=hod_share_with_tax,
+                        company_share=wallet_tecnician,
+                    )
+                    share.save()
+                    technician = task.technician
+                    wallet, created = Wallet.objects.get_or_create(
+                        technician_id=technician
+                    )
+                    wallet.total_share -= Decimal(str(wallet_tecnician))
+
+                    wallet.save()
+
+                    settlement = Settlement.objects.create(
+                        technician_id=technician,
+                        amount=wallet_tecnician,
+                        settlement="Settlement Deduction",
+                    )
+                    settlement.save()
+
+                    try:
+                        booking = Booking.objects.get(id=booking_id)
+                        # tax = booking.tax_amount
+                        subtotal = booking.subtotal
+                        tax = Decimal(subtotal) * Decimal(0.18)
+                        total = tax + subtotal
+                        total_amt = Decimal(booking.total_amount) + Decimal(
+                            booking.tax_amount
+                        )
+                        cgst_sgst = Decimal(total_amt) * Decimal(0.09)
+                        grandtotal = total_amt + (cgst_sgst * 2)
+
+                        bkng_id = Booking.objects.filter(id=booking_id)
+                        
+                        if booking:
+                            invoice = Invoice.objects.filter(booking_id=booking).first()
+                            if not invoice:
+                                invoice = Invoice.objects.create(booking_id=booking)
+                                bookingprod = BookingProduct.objects.filter(
+                                    booking=booking
+                                ).first()
+
+                                # addon = Addon.objects.filter(booking_prod_id=bookingprod)
+
+                                addon = Addon.objects.filter(
+                                    booking_prod_id=bookingprod
+                                )
+
+                                input_file = render_to_string(
+                                    "Invoice/invoice.html",
+                                    {
+                                        "booking": invoice,
+                                        "addon": addon,
+                                        "total": total,
+                                        "cgst_sgst": cgst_sgst,
+                                        "grandtotal": grandtotal,
+                                    },
+                                )
+                                options = {"enable-local-file-access": ""}
+
+                                pdf_data = pdfkit.from_string(
+                                    input_file, False, options=options
+                                )
+
+                                if pdf_data:
+                                    invoice.invoice = pdf_data
+                                    invoice.save()
+                                    # invoice.save()
+                                    print("PDF data saved in invoice successfully.")
+
+                                # return Response({'success': True})
+                            else:
+                                pass
+                                # Booking does not exist
+                                # return Response({'Error': False, 'error': 'Invoice already created'})
+                    except Exception as e:
+                        print(e)
+
+                return Response({"success": True})
+            except Booking.DoesNotExist:
+                return Response({"success": False, "message": "Booking not found."})
+        else:
+            return Response(
+                {"success": False, "message": "Booking id and status are required."}
+            )
+
 
 
 

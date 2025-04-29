@@ -85,7 +85,7 @@ class BookingProductSerializer(serializers.ModelSerializer):
 
 
 class BookingSerializer(serializers.ModelSerializer):
-    booking_product = BookingProductSerializer(many=True)
+    # booking_product = BookingProductSerializer(many=True)
     customer = CustomerSerializer()
     products = ProductSerializer(many=True)
     tax_amount = serializers.ReadOnlyField()
@@ -102,9 +102,8 @@ class BookingSerializer(serializers.ModelSerializer):
 
 class TaskSerializer(serializers.ModelSerializer):
     booking = BookingSerializer()
-    technician = techSerializer()
-    # booking_product = BookingprdSerializer(source='booking.bookingproduct_set', many=True)
-  
+    # technician = techSerializer()
+   
 
     class Meta:
         model = Task

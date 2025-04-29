@@ -13,6 +13,13 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 router = DefaultRouter()
 router.register('Expert', API_Views.ExpertViewSet,basename="Expert")
 router.register('Task', API_Views.TaskViewSet,basename="Task")
+
+
+##### new api here 
+router.register('technician/task', API_Views.TechniciantaskViewSet,basename="technicianTask")
+######### end new api
+
+
 router.register('Rebooking', API_Views.RebookingViewSet,basename="Rebooking")
 router.register('JobEnquiry', API_Views.JobEnquiryViewSet,basename="JobEnquiry")
 router.register('Product', API_Views.ProductViewSet,basename="Product")
