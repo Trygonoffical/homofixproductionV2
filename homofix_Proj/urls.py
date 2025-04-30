@@ -18,6 +18,7 @@ router.register('Task', API_Views.TaskViewSet,basename="Task")
 ##### new api here 
 router.register('technician/task', API_Views.TechniciantaskViewSet,basename="technicianTask")
 router.register('technician/addons', API_Views.TechnicianAddonsGetViewSet,basename="technicianAddons")
+router.register('technician/Rebooking', API_Views.TechnicianRebookingViewSet,basename="technicianRebooking")
 ######### end new api
 
 

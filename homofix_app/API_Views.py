@@ -977,6 +977,35 @@ class TechnicianAddonsGetViewSet(ModelViewSet):
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+
+
+class TechnicianRebookingViewSet(ModelViewSet):
+    queryset = Rebooking.objects.all()
+    serializer_class = RebookingSerializer
+
+    def list(self, request, *args, **kwargs):
+        technician_id = request.query_params.get("technician_id")
+        status = request.query_params.get("status")
+
+        if not technician_id or not status:
+            return Response({"detail": "Both 'technician_id' and 'status' are required."}, status=400)
+
+        status = status.lower()
+
+        status_map = {
+            "assign": ["Assign", "Inprocess"],   
+            "inprocess": ["Inprocess","Assign"],
+            "completed": ["Completed"],
+        }
+
+        if status not in status_map:
+            return Response({"detail": f"Invalid status '{status}'. Valid options are: assign, inprocess, completed."}, status=400)
+
+        filtered_qs = self.queryset.filter(technician_id=technician_id, status__in=status_map[status])
+        serializer = self.get_serializer(filtered_qs, many=True)
+        return Response(serializer.data)
+
+    
 ######### end new api #######################################################
 
 class RebookingViewSet(ModelViewSet):
