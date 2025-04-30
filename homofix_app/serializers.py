@@ -85,7 +85,7 @@ class BookingProductSerializer(serializers.ModelSerializer):
 
 
 class BookingSerializer(serializers.ModelSerializer):
-    # booking_product = BookingProductSerializer(many=True)
+    booking_product = BookingProductSerializer(many=True)
     customer = CustomerSerializer()
     products = ProductSerializer(many=True)
     tax_amount = serializers.ReadOnlyField()
