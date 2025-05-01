@@ -1005,7 +1005,60 @@ class TechnicianRebookingViewSet(ModelViewSet):
         serializer = self.get_serializer(filtered_qs, many=True)
         return Response(serializer.data)
 
-    
+
+
+
+
+@api_view(['PATCH'])
+def technicianRebookingStatusUpdated(request):
+    try:
+        data = request.data
+        rebooking_id = data.get("rebooking_id")
+        technician_id = data.get("technician_id")
+        status = data.get("status")
+
+        # Validate all required fields
+        if not rebooking_id or not technician_id or not status:
+            return Response({
+                'status': False,
+                'message': "rebooking_id, technician_id, and status are required.",
+                'data': {}
+            })
+
+        # Fetch specific Rebooking by ID and technician
+        try:
+            obj = Rebooking.objects.get(id=rebooking_id, technician_id=technician_id)
+        except Rebooking.DoesNotExist:
+            return Response({
+                'status': False,
+                'message': 'Rebooking not found for given rebooking_id and technician_id',
+                'data': {}
+            })
+
+        # Update status only
+        serializer = RebookingSerializer(obj, data={'status': status}, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                'status': True,
+                'message': 'Status updated successfully',
+                'data': serializer.data
+            })
+        else:
+            return Response({
+                'status': False,
+                'message': 'Invalid data',
+                'data': serializer.errors
+            })
+
+    except Exception as e:
+        print("Error:", e)
+        return Response({
+            'status': False,
+            'message': 'An error occurred',
+            'data': {}
+        })
+
 ######### end new api #######################################################
 
 class RebookingViewSet(ModelViewSet):
@@ -1167,49 +1220,46 @@ def create_booking_manually(request):
 #         })
 
 
-
 @api_view(['PATCH'])
 def RebookingStatusUpdated(request):
     try:
         data = request.data
-        rebooking_id = data.get("rebooking_id")
-        technician_id = data.get("technician_id")
-        status = data.get("status")
-
-        # Validate all required fields
-        if not rebooking_id or not technician_id or not status:
+        print("data", data)
+        
+        # Technician ID validation
+        if not data.get("technician_id"):
             return Response({
                 'status': False,
-                'message': "rebooking_id, technician_id, and status are required.",
-                'data': {}
+                'message': "Technician id is required",
+                "data": {}
             })
-
-        # Fetch specific Rebooking by ID and technician
-        try:
-            obj = Rebooking.objects.get(id=rebooking_id, technician_id=technician_id)
-        except Rebooking.DoesNotExist:
+        
+        # Fetch the first Rebooking object matching the technician_id
+        obj = Rebooking.objects.filter(technician=data.get("technician_id")).first()
+        
+        if not obj:
             return Response({
                 'status': False,
-                'message': 'Rebooking not found for given rebooking_id and technician_id',
+                'message': 'No Rebooking found for the given technician ID',
                 'data': {}
             })
-
-        # Update status only
-        serializer = RebookingSerializer(obj, data={'status': status}, partial=True)
+        
+        # Serialize and save the data
+        serializer = RebookingSerializer(obj, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response({
                 'status': True,
-                'message': 'Status updated successfully',
+                'message': 'Success Data',
                 'data': serializer.data
             })
-        else:
-            return Response({
-                'status': False,
-                'message': 'Invalid data',
-                'data': serializer.errors
-            })
-
+        
+        return Response({
+            'status': False,
+            'message': 'Invalid data',
+            'data': serializer.errors
+        })
+    
     except Exception as e:
         print("Error:", e)
         return Response({

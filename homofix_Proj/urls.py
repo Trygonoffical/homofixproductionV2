@@ -120,6 +120,11 @@ urlpatterns = [
         API_Views.front_booking_status,
         name="booking_status_update",
     ),
+
+    ####################### NEW URL ALSO HERE #########################
+    path('api/technician/rebooking/status/update',API_Views.technicianRebookingStatusUpdated,name="technicianRebookingStatusUpdated"),
+
+    ########################## END new url Manually ####################
     
 ]+static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
