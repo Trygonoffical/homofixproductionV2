@@ -1118,46 +1118,98 @@ def create_booking_manually(request):
 
 
 
+# @api_view(['PATCH'])
+# def RebookingStatusUpdated(request):
+#     try:
+#         data = request.data
+#         print("data", data)
+        
+#         # Technician ID validation
+#         if not data.get("technician_id"):
+#             return Response({
+#                 'status': False,
+#                 'message': "Technician id is required",
+#                 "data": {}
+#             })
+        
+#         # Fetch the first Rebooking object matching the technician_id
+#         obj = Rebooking.objects.filter(technician=data.get("technician_id")).first()
+        
+#         if not obj:
+#             return Response({
+#                 'status': False,
+#                 'message': 'No Rebooking found for the given technician ID',
+#                 'data': {}
+#             })
+        
+#         # Serialize and save the data
+#         serializer = RebookingSerializer(obj, data=data, partial=True)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response({
+#                 'status': True,
+#                 'message': 'Success Data',
+#                 'data': serializer.data
+#             })
+        
+#         return Response({
+#             'status': False,
+#             'message': 'Invalid data',
+#             'data': serializer.errors
+#         })
+    
+#     except Exception as e:
+#         print("Error:", e)
+#         return Response({
+#             'status': False,
+#             'message': 'An error occurred',
+#             'data': {}
+#         })
+
+
+
 @api_view(['PATCH'])
 def RebookingStatusUpdated(request):
     try:
         data = request.data
-        print("data", data)
-        
-        # Technician ID validation
-        if not data.get("technician_id"):
+        rebooking_id = data.get("rebooking_id")
+        technician_id = data.get("technician_id")
+        status = data.get("status")
+
+        # Validate all required fields
+        if not rebooking_id or not technician_id or not status:
             return Response({
                 'status': False,
-                'message': "Technician id is required",
-                "data": {}
-            })
-        
-        # Fetch the first Rebooking object matching the technician_id
-        obj = Rebooking.objects.filter(technician=data.get("technician_id")).first()
-        
-        if not obj:
-            return Response({
-                'status': False,
-                'message': 'No Rebooking found for the given technician ID',
+                'message': "rebooking_id, technician_id, and status are required.",
                 'data': {}
             })
-        
-        # Serialize and save the data
-        serializer = RebookingSerializer(obj, data=data, partial=True)
+
+        # Fetch specific Rebooking by ID and technician
+        try:
+            obj = Rebooking.objects.get(id=rebooking_id, technician_id=technician_id)
+        except Rebooking.DoesNotExist:
+            return Response({
+                'status': False,
+                'message': 'Rebooking not found for given rebooking_id and technician_id',
+                'data': {}
+            })
+
+        # Update status only
+        serializer = RebookingSerializer(obj, data={'status': status}, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response({
                 'status': True,
-                'message': 'Success Data',
+                'message': 'Status updated successfully',
                 'data': serializer.data
             })
-        
-        return Response({
-            'status': False,
-            'message': 'Invalid data',
-            'data': serializer.errors
-        })
-    
+        else:
+            return Response({
+                'status': False,
+                'message': 'Invalid data',
+                'data': serializer.errors
+            })
+
     except Exception as e:
         print("Error:", e)
         return Response({
@@ -1165,7 +1217,6 @@ def RebookingStatusUpdated(request):
             'message': 'An error occurred',
             'data': {}
         })
-
 
 
 @api_view(['POST'])
