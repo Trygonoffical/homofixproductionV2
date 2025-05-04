@@ -10,7 +10,7 @@ echo "New changes copied to server !"
 
 # Activate Virtual Env
 #Syntax:- source virtual_env_name/bin/activate
-source env/bin/activate
+source /home/armaan/actions-runner/_work/homofixproductionV2/homofixproductionV2/env/bin/activate
 echo "Virtual env 'env' Activated !"
 
 echo "Clearing Cache..."
@@ -18,14 +18,14 @@ python manage.py clean_pyc
 python manage.py clear_cache
 
 echo "Installing Dependencies..."
-pip install -r requirements.txt --no-input
+pip install /home/armaan/actions-runner/_work/homofixproductionV2/homofixproductionV2 -r requirements.txt --no-input
 
 echo "Serving Static Files..."
-python manage.py collectstatic --noinput
+python /home/armaan/actions-runner/_work/homofixproductionV2/homofixproductionV2/manage.py collectstatic --noinput
 
 echo "Running Database migration..."
-python manage.py makemigrations
-python manage.py migrate
+python /home/armaan/actions-runner/_work/homofixproductionV2/homofixproductionV2/manage.py makemigrations
+python /home/armaan/actions-runner/_work/homofixproductionV2/homofixproductionV2/manage.py migrate
 
 # Deactivate Virtual Env
 deactivate
