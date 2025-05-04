@@ -21,9 +21,12 @@ jobs:
       uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Running Scritp 
+    - name: Running Script 
       run: |
-        cd /home/armaan/actions-runner/_work/homofixproductionV2/homofixproductionV2 && ./.scripts/deploy.sh
+        cd /home/armaan/actions-runner/_work/homofixproductionV2/homofixproductionV2 
+    - name: Running deploy Script 
+      run: |
+        ./.scripts/deploy.sh
     - name: Restart Gunicorn
       run: |
         # Safely kill the Gunicorn master process - systemd will restart it automatically
