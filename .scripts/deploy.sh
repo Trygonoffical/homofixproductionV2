@@ -10,7 +10,7 @@ echo "New changes copied to server !"
 
 # Activate Virtual Env
 #Syntax:- source virtual_env_name/bin/activate
-source /home/armaan/actions-runner/_work/homofixproductionV2/homofixproductionV2/env/bin/activate
+source /home/armaan/actions-runner/_work/homofixproductionV2/env/bin/activate
 echo "Virtual env 'env' Activated !"
 
 echo "Clearing Cache..."
