@@ -21,10 +21,10 @@ jobs:
       uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install Dependencies
+    - name: Running Scritp 
       run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-    - name: Run Tests
+        cd /home/armaan/actions-runner/_work/homofixproductionV2/homofixproductionV2 && ./.scripts/deploy.sh
+    - name: Restart Gunicorn
       run: |
-        python manage.py test
+        # Safely kill the Gunicorn master process - systemd will restart it automatically
+        pkill gunicorn || echo "No Gunicorn process found"
