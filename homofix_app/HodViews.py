@@ -1524,6 +1524,21 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db.models import Q  # Q object for complex queries
 
 def booking_list(request):
+
+    if request.method == "POST":
+        otp_number = random.randint(0, 9999)
+        print("otpp number", otp_number)
+        otp_unique = str(otp_number).zfill(3)
+
+        first_name = request.POST.get("full_name")
+        mob = request.POST.get("mob")
+        request.session["full_name"] = first_name
+        request.session["mob"] = mob
+        request.session["otp"] = otp_unique
+        if Customer.objects.filter(mobile=mob).exists():
+            return JsonResponse({'status':'Save'})
+        else:
+             return JsonResponse({"status": "Save"})
     search_query = request.GET.get('q', '')  # Search query from input field
 
     bookings_queryset = Booking.objects.filter(status="New").order_by("-id")
