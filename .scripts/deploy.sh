@@ -10,7 +10,7 @@ echo "New changes copied to server !"
 
 # Activate Virtual Env
 #Syntax:- source virtual_env_name/bin/activate
-source myenv/bin/activate
+source env/bin/activate
 echo "Virtual env 'env' Activated !"
 
 echo "Clearing Cache..."
