@@ -1522,12 +1522,67 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 
 from django.db.models import Q  # Q object for complex queries
+from django.utils.dateparse import parse_date
+# def booking_list(request):
+
+#     if request.method == "POST":
+#         otp_number = random.randint(0, 9999)
+#         print("otpp number", otp_number)
+#         otp_unique = str(otp_number).zfill(3)
+
+#         first_name = request.POST.get("full_name")
+#         mob = request.POST.get("mob")
+#         request.session["full_name"] = first_name
+#         request.session["mob"] = mob
+#         request.session["otp"] = otp_unique
+#         if Customer.objects.filter(mobile=mob).exists():
+#             return JsonResponse({'status':'Save'})
+#         else:
+#              return JsonResponse({"status": "Save"})
+#     search_query = request.GET.get('q', '')  # Search query from input field
+
+#     bookings_queryset = Booking.objects.filter(status="New").order_by("-id")
+
+#     if search_query:
+#         bookings_queryset = bookings_queryset.filter(
+#             Q(order_id__icontains=search_query) |
+#             Q(booking_customer__icontains=search_query) |
+#             Q(city__icontains=search_query) |
+#             Q(zipcode__icontains=search_query) |
+#             Q(mobile__icontains=search_query)
+#         )
+
+#     paginator = Paginator(bookings_queryset, 10)
+#     page = request.GET.get("page")
+#     try:
+#         bookings = paginator.page(page)
+#     except PageNotAnInteger:
+#         bookings = paginator.page(1)
+#     except EmptyPage:
+#         bookings = paginator.page(paginator.num_pages)
+
+#     new_expert_count = Technician.objects.filter(status="New").count()
+#     rebooking_count = Rebooking.objects.count()
+#     customer_count = Customer.objects.count()
+
+#     context = {
+#         "bookings": bookings,
+#         "new_expert_count": new_expert_count,
+#         "booking_count": bookings_queryset.count(),
+#         "rebooking_count": rebooking_count,
+#         "customer_count": customer_count,
+#         "search_query": search_query,
+#     }
+
+#     return render(request, "homofix_app/AdminDashboard/Booking_list/booking.html", context)
+
+
+
 
 def booking_list(request):
-
     if request.method == "POST":
         otp_number = random.randint(0, 9999)
-        print("otpp number", otp_number)
+        print("OTP number:", otp_number)
         otp_unique = str(otp_number).zfill(3)
 
         first_name = request.POST.get("full_name")
@@ -1535,22 +1590,35 @@ def booking_list(request):
         request.session["full_name"] = first_name
         request.session["mob"] = mob
         request.session["otp"] = otp_unique
-        if Customer.objects.filter(mobile=mob).exists():
-            return JsonResponse({'status':'Save'})
-        else:
-             return JsonResponse({"status": "Save"})
-    search_query = request.GET.get('q', '')  # Search query from input field
 
+        if Customer.objects.filter(mobile=mob).exists():
+            return JsonResponse({'status': 'Save'})
+        else:
+            return JsonResponse({"status": "Save"})
+
+    search_query = request.GET.get('q', '')  # Search query from input field
+   
     bookings_queryset = Booking.objects.filter(status="New").order_by("-id")
 
     if search_query:
-        bookings_queryset = bookings_queryset.filter(
-            Q(order_id__icontains=search_query) |
-            Q(booking_customer__icontains=search_query) |
-            Q(mobile__icontains=search_query)
-        )
+        try:
+            # Try parsing search_query as a date (YYYY-MM-DD)
+            parsed_date = parse_date(search_query)
+        except ValueError:
+            parsed_date = None
 
-    paginator = Paginator(bookings_queryset, 5)
+        filters = Q(order_id__icontains=search_query) | \
+                  Q(booking_customer__icontains=search_query) | \
+                  Q(city__icontains=search_query) | \
+                  Q(zipcode__icontains=search_query) | \
+                  Q(mobile__icontains=search_query)
+
+        if parsed_date:
+            filters |= Q(booking_date__icontains=parsed_date)  # Add booking date filter if valid
+
+        bookings_queryset = bookings_queryset.filter(filters)
+
+    paginator = Paginator(bookings_queryset, 10)
     page = request.GET.get("page")
     try:
         bookings = paginator.page(page)

@@ -9,13 +9,13 @@
 <div class="page-content">
     <!--breadcrumb-->
     <div class="page-breadcrumb d-none d-sm-flex align-items-center mb-3">
-        <div class="breadcrumb-title pe-3">Re-Booking</div>
+        <div class="breadcrumb-title pe-3">Booking</div>
         <div class="ps-3">
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb mb-0 p-0">
                     <li class="breadcrumb-item"><a href="javascript:;"><i class="bx bx-home-alt"></i></a>
                     </li>
-                    <li class="breadcrumb-item active" aria-current="page">Order Completed</li>
+                    <li class="breadcrumb-item active" aria-current="page">Booking Completed</li>
                 </ol>
             </nav>
         </div>
@@ -23,7 +23,7 @@
     </div>
     <!--end breadcrumb-->
 
-    <h6 class="mb-0 text-uppercase">List of Order Completed</h6>
+    <h6 class="mb-0 text-uppercase">List of Booking Completed</h6>
     <hr>
 
     {% include 'homofix_app/Base/messages.html' %}
@@ -196,7 +196,7 @@
                 </table>
 
             </div>
-
+{% comment %} 
             <div class="pagination">
                 <ul class="pagination justify-content-center">
                     {% if task.has_previous %}
@@ -221,7 +221,34 @@
                         </li>
                     {% endif %}
                 </ul>
-            </div>
+            </div> {% endcomment %}
+
+            <div class="pagination">
+    <ul class="pagination justify-content-center">
+        {% if task.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page=1{% if search_query %}&booking_id={{ search_query }}{% endif %}">First</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ task.previous_page_number }}{% if search_query %}&booking_id={{ search_query }}{% endif %}">Previous</a>
+            </li>
+        {% endif %}
+
+        <li class="page-item disabled">
+            <span class="page-link">Page {{ task.number }} of {{ task.paginator.num_pages }}</span>
+        </li>
+
+        {% if task.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ task.next_page_number }}{% if search_query %}&booking_id={{ search_query }}{% endif %}">Next</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ task.paginator.num_pages }}{% if search_query %}&booking_id={{ search_query }}{% endif %}">Last</a>
+            </li>
+        {% endif %}
+    </ul>
+</div>
+
             
 
 

@@ -179,7 +179,7 @@
 
 
             </div>
-
+{% comment %} 
             <div class="pagination">
                 <ul class="pagination justify-content-center">
                     <!-- First Page Link -->
@@ -232,7 +232,61 @@
                     {% endif %}
                 </ul>
             </div>
-            
+             {% endcomment %}
+
+             <div class="pagination">
+    <ul class="pagination justify-content-center">
+        <!-- First Page Link -->
+        {% if task.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page=1{% if search_query %}&q={{ search_query }}{% endif %}">&laquo; First</a>
+            </li>
+        {% else %}
+            <li class="page-item disabled">
+                <span class="page-link">&laquo; First</span>
+            </li>
+        {% endif %}
+
+        <!-- Previous Page Link -->
+        {% if task.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ task.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}">Previous</a>
+            </li>
+        {% else %}
+            <li class="page-item disabled">
+                <span class="page-link">Previous</span>
+            </li>
+        {% endif %}
+
+        <!-- Current Page Information -->
+        <li class="page-item disabled">
+            <span class="page-link">Page {{ task.number }} of {{ task.paginator.num_pages }}</span>
+        </li>
+
+        <!-- Next Page Link -->
+        {% if task.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ task.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}">Next</a>
+            </li>
+        {% else %}
+            <li class="page-item disabled">
+                <span class="page-link">Next</span>
+            </li>
+        {% endif %}
+
+        <!-- Last Page Link -->
+        {% if task.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ task.paginator.num_pages }}{% if search_query %}&q={{ search_query }}{% endif %}">Last &raquo;</a>
+            </li>
+        {% else %}
+            <li class="page-item disabled">
+                <span class="page-link">Last &raquo;</span>
+            </li>
+        {% endif %}
+    </ul>
+</div>
+
 
 
 
